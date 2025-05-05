@@ -1,0 +1,84 @@
+services:
+  app-dev: # Renamed from 'app'
+    build:
+      context: .  # Set context to the root directory
+      dockerfile: ./login/Dockerfile  # Path to Dockerfile relative to context
+      args:
+        # Pass the path to the dev server.js as a build argument
+        - SERVER_JS_PATH=./login/dev/server.js
+    ports:
+      - "3000:3000" # Dev app on host port 3000
+    environment:
+      # Pass database connection details to the Node.js app using .env variables
+      - DB_HOST=db-demo-qtm # Service name of the postgres container
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - DB_PORT=${DB_PORT}
+      - PORT=3000 # Explicitly set container port
+
+    depends_on:
+      db-demo-qtm:
+        condition: service_healthy # Wait for DB to be ready
+    volumes:
+      # Mount specific server.js for live reload
+      - ./login/dev/server.js:/app/server.js
+      - ./login/index.html:/app/index.html
+      - ./package.json:/app/package.json # Optional: if you change deps without rebuild
+      # Exclude node_modules from being overwritten by the volume mount
+      - /app/node_modules
+
+  app-stable: # New service for the stable version
+    build:
+      context: .  # Set context to the root directory
+      dockerfile: ./login/Dockerfile  # Path to Dockerfile relative to context
+      args:
+        # Pass the path to the stable server.js as a build argument
+        - SERVER_JS_PATH=./login/stable/server.js
+    ports:
+      - "3001:3001" # Map host 3001 to container 3001
+    environment:
+      # Pass database connection details - same DB as dev
+      - DB_HOST=db-demo-qtm # Service name of the postgres container
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - DB_PORT=${DB_PORT}
+      - PORT=3001 # Set the port the stable app listens on inside the container
+
+    depends_on:
+      db-demo-qtm:
+        condition: service_healthy # Wait for DB to be ready
+    volumes:
+      # Mount specific server.js for live reload
+      - ./login/stable/server.js:/app/server.js
+      - ./login/index.html:/app/index.html
+      - ./package.json:/app/package.json # Optional: if you change deps without rebuild
+      # Exclude node_modules from being overwritten by the volume mount
+      - /app/node_modules
+
+  db-demo-qtm:
+    image: postgres:17-alpine
+    environment:
+      # Set up the database user, password, and name using .env variables
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      # Persist database data
+      - postgres_data:/var/lib/postgresql/data
+      # Mount the initialization script from the root directory now
+      - ./login/init.sql:/docker-entrypoint-initdb.d/init.sql # Path relative to compose file
+    ports:
+      # Expose PostgreSQL port only if needed for external access (e.g., debugging)
+      # - "5432:5432"
+      - "5433:5432" # Map host 5433 to container 5432 to avoid conflicts if local postgres runs on 5432
+    healthcheck:
+      # Update healthcheck to use variables too
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data: # Define the named volume for data persistence

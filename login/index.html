@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Login Demo - Vulnerable App</title>
+    <style>
+    /* Styles adapted from PasswordValidator 3.html */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif; /* Font from validator */
+      display: flex;
+      justify-content: center; /* Center form horizontally */
+      align-items: center; /* Center form vertically */
+      height: 100vh;
+      background-color: #f2f2f2; /* Background from validator's right panel */
+      color: #000;
+      position: relative; /* Needed for the ::before pseudo-element */
+      overflow: hidden; /* Prevent scrollbars caused by watermark */
+    }
+
+    /* Add the watermark pseudo-element */
+    body::before {
+      content: "SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM UNDER TEST SYSTEM";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      color: #b8b8b8; /* Watermark color from validator */
+      word-break: break-all;
+      overflow-wrap: break-word;
+      font-size: 3.2rem; /* Font size from validator */
+      font-weight: bold;
+      line-height: 4rem; /* Line height from validator */
+      z-index: 0; /* Behind content */
+      opacity: 0.2; /* Opacity from validator */
+      pointer-events: none; /* Allow clicks through */
+      /* Optional: Add repeating background if desired */
+      /* background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 4rem,
+        #f2f2f2 4rem,
+        #f2f2f2 8rem
+      ); */
+    }
+
+    .form-container {
+      background: white;
+      padding: 2rem; /* Padding from validator */
+      border-radius: 8px;
+      border: 3px solid #2c3e50; /* Border from validator */
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Shadow from validator */
+      width: 100%;
+      max-width: 500px; /* Max-width from validator */
+      /* height: 280px; */ /* Original height - adjust for login form */
+      min-height: 320px; /* Use min-height for flexibility */
+      text-align: center;
+      display: flex; /* Added flex to help center content */
+      flex-direction: column;
+      justify-content: center;
+      position: relative; /* Ensure form is above the watermark */
+      z-index: 1; /* Ensure form is above the watermark */
+    }
+
+    h2 {
+        margin-top: 0;
+        margin-bottom: 0.5rem; /* Adjust as needed */
+        color: #333;
+    }
+
+     p.info { /* Style for info text */
+        margin-bottom: 1rem; /* Adjust as needed */
+        color: #555;
+        font-size: 0.9rem;
+    }
+
+    .input-container { /* Container for input + reveal */
+        position: relative;
+        margin: 0.75rem 0;
+    }
+
+    input[type="text"], input[type="password"] { /* Apply to both */
+      width: 100%;
+      padding: 0.5rem; /* Padding from validator */
+      /* margin: 0.75rem 0; */ /* Moved margin to container */
+      border: 1px solid #ccc; /* Border from validator */
+      border-radius: 4px;
+      font-size: 1rem; /* Ensure consistent font size */
+    }
+
+    .password-container { /* Specific container for password + checkbox */
+        position: relative;
+        display: flex; /* Align input and checkbox */
+        align-items: center; /* Vertically center items */
+        margin: 0.75rem 0;
+    }
+
+    #password {
+        flex-grow: 1; /* Allow password input to take available space */
+        /* Remove right padding if checkbox is inside */
+        /* padding-right: 30px; */ /* Adjust if needed */
+    }
+
+    .reveal-password {
+        display: flex;
+        align-items: center;
+        margin-left: 8px; /* Space between input and checkbox */
+        font-size: 0.8rem;
+        cursor: pointer;
+        white-space: nowrap; /* Prevent label text wrapping */
+    }
+
+    .reveal-password input[type="checkbox"] {
+        margin-right: 4px; /* Space between checkbox and label */
+    }
+
+    button {
+      padding: 0.5rem 1rem; /* Padding from validator */
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem; /* Ensure consistent font size */
+      transition: background-color 0.2s ease;
+      margin-top: 1rem; /* Add some top margin */
+      /* width: auto; */ /* Let button size naturally or set width if needed */
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .message { /* Style for messages */
+      margin-top: 1rem; /* Margin from validator */
+      font-weight: bold;
+      min-height: 1.2em;
+      color: red; /* Default to red */
+      text-align: center; /* Center message text */
+      font-size: 0.9rem;
+    }
+
+    .error-message {
+        color: red;
+        font-weight: bold;
+        margin-bottom: 1em;
+    }
+
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <h2>Login</h2>
+        <p class="info">Enter your credentials.</p>
+        <!-- Add this element to display errors -->
+        <div id="errorMessage" class="error-message"></div>
+        <!-- Login Form -->
+        <form action="/login" method="post" id="loginForm">
+             <div class="input-container">
+                 <input type="text" id="username" name="username" placeholder="Username" autocomplete="off" required />
+             </div>
+             <div class="password-container">
+                 <input type="password" id="password" name="password" placeholder="Password" autocomplete="off" required />
+                 <label class="reveal-password">
+                     <input type="checkbox" id="togglePassword"> Show
+                 </label>
+             </div>
+             <button type="submit">Login</button>
+        </form>
+        <!-- Message area for server responses -->
+        <div class="message" id="message">
+            <!-- Server responses might populate this via JS later, or just rely on full page response -->
+        </div>
+    </div>
+
+    <!-- Add this script at the end of the body -->
+    <script>
+        window.onload = function() {
+            const errorElement = document.getElementById('errorMessage');
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+
+            if (error) {
+                // Decode the error message and display it
+                errorElement.textContent = decodeURIComponent(error);
+            } else {
+                errorElement.textContent = ''; // Clear any previous error
+            }
+
+            // Optional: Remove the error parameter from the URL without reloading
+            if (window.history.replaceState) {
+                const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+            }
+        };
+
+        // Add password toggle functionality
+        const togglePasswordCheckbox = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        if (togglePasswordCheckbox && passwordInput) {
+            togglePasswordCheckbox.addEventListener('change', function() {
+                // Change the type of the password input based on the checkbox state
+                const type = this.checked ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+            });
+        }
+    </script>
+
+</body>
+</html>
