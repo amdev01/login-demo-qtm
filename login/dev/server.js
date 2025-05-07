@@ -2,13 +2,28 @@ const express = require('express');
 const { Pool } = require('pg');
 const bodyParser = require('body-parser');
 const path = require('path');
+const fs = require('fs'); // Import the fs module
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Determine index.html path based on file existence
+let indexPath = path.join(__dirname, 'index.html'); // Default to current directory
+if (!fs.existsSync(indexPath)) {
+    // If not found in current directory, try one directory up
+    indexPath = path.join(__dirname, '..', 'index.html');
+}
+
 // Serve the static index.html file
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            console.error("Error sending file:", indexPath, err);
+            if (!res.headersSent) {
+                res.status(404).send("Error: index.html not found at determined path.");
+            }
+        }
+    });
 });
 
 // Use environment variables for database connection
