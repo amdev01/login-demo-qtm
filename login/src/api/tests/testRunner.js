@@ -7,7 +7,7 @@ const path = require('path');
  * @returns {Promise<object>} - Test results
  */
 async function runTests(testPattern = null) {
-  const projectRootPath = path.resolve(__dirname, '../../../../');
+  const projectRootPath = path.resolve(__dirname, '../../../');
   
   const options = {
     projects: [projectRootPath],
