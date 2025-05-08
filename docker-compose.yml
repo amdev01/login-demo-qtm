@@ -3,9 +3,6 @@ services:
     build:
       context: .  # Set context to the root directory
       dockerfile: ./login/Dockerfile  # Path to Dockerfile relative to context
-      args:
-        # Pass the path to the dev server.js as a build argument
-        - SERVER_JS_PATH=./login/dev/server.js
     ports:
       - "3000:3000" # Dev app on host port 3000
     environment:
@@ -16,14 +13,16 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - DB_PORT=${DB_PORT}
       - PORT=3000 # Explicitly set container port
+      - ENV_STATE=dev
 
     depends_on:
       db-demo-qtm:
         condition: service_healthy # Wait for DB to be ready
     volumes:
       # Mount specific server.js for live reload
-      - ./login/dev/server.js:/app/server.js
-      - ./login/index.html:/app/index.html
+      - ./login/src/dev/implementation.js:/app/src/dev/implementation.js
+      - ./login/src/common/server.js:/app/src/common/server.js
+      - ./login/src/public/index.html:/app/src/public/index.html
       - ./package.json:/app/package.json # Optional: if you change deps without rebuild
       # Exclude node_modules from being overwritten by the volume mount
       - /app/node_modules
@@ -32,9 +31,6 @@ services:
     build:
       context: .  # Set context to the root directory
       dockerfile: ./login/Dockerfile  # Path to Dockerfile relative to context
-      args:
-        # Pass the path to the stable server.js as a build argument
-        - SERVER_JS_PATH=./login/stable/server.js
     ports:
       - "3001:3001" # Map host 3001 to container 3001
     environment:
@@ -45,14 +41,16 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - DB_PORT=${DB_PORT}
       - PORT=3001 # Set the port the stable app listens on inside the container
+      - ENV_STATE=stable
 
     depends_on:
       db-demo-qtm:
         condition: service_healthy # Wait for DB to be ready
     volumes:
       # Mount specific server.js for live reload
-      - ./login/stable/server.js:/app/server.js
-      - ./login/index.html:/app/index.html
+      - ./login/src/stable/implementation.js:/app/src/stable/implementation.js
+      - ./login/src/common/server.js:/app/src/common/server.js
+      - ./login/src/public/index.html:/app/src/public/index.html
       - ./package.json:/app/package.json # Optional: if you change deps without rebuild
       # Exclude node_modules from being overwritten by the volume mount
       - /app/node_modules
